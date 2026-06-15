@@ -1,29 +1,23 @@
-# Python
 __pycache__/
-*.py[cod]
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Environments
-.venv/
-venv/
-env/
+*.pyc
 .env
+.venv/
+.DS_Store
 
-# Large data and model artifacts
-data/
-datasets/
+data/*
+!data/.gitkeep
+
+outputs/*
+!outputs/.gitkeep
+
 weights/
-runs/
 *.pt
 *.onnx
 *.engine
+
 *.mp4
-*.h264
 *.avi
 *.mov
-
-# System files
-.DS_Store
-
+*.zip
+*.tar
+*.tar.gz
