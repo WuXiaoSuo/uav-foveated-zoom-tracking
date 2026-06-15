@@ -1,37 +1,17 @@
 # UAV Foveated Zoom Tracking
 
-本仓库用于整理“无人机主动感知与微小目标追踪”毕业设计与 ICRA workshop 小论文的研究方案、数据采集规范和后续代码实现。
+本仓库用于管理论文 **UFZ-Track: Uncertainty-Guided Foveated Zoom for UAV Small Object Tracking** 的代码、实验配置、论文文档和实验记录。
 
-## 研究主题
+本项目研究一种受限主动感知问题：在 UAV 本体不参与自主控制、边缘算力受限的条件下，仅通过调节云台相机的 optical/foveated zoom，提高远距离小目标追踪的可观测性和稳定性。
 
-面向 M400 + Zenmuse H30 + Manifold 3 平台，研究在低空开放操场场景下，通过 H30 光学变焦实现微小目标追踪的仿生中心凹主动感知方法。
+## 研究目标
 
-当前研究边界：
-
-- 无人机本体由飞手手飞或悬停，不进行自主飞控控制。
-- 算法主要控制 H30 光学变焦倍率，暂不控制云台。
-- Manifold 3 负责视频流获取、轻量模型推理、主动变焦策略和日志记录。
-- 目标类别优先选择人、标志桶、足球框/球门背景下的人。
-
-## 文档
-
-- [毕业论文.md](./毕业论文.md)：毕业设计整体路线、章节结构、系统方案与长期研发计划。
-- [小论文.md](./小论文.md)：ICRA workshop 论文定位、Method 设计、实验与消融方案。
-- [数据集采集.md](./数据集采集.md)：台架验证、外场采集 SOP、数据格式和实验矩阵。
-
-## 推荐仓库结构
+远距离 UAV 巡检、监视和搜寻任务中，目标通常只占据很少像素，导致检测置信度低、定位误差大、追踪易漂移。相比单纯增加 detector/tracker 复杂度，本项目关注：
 
 ```text
-.
-├── README.md
-├── 毕业论文.md
-├── 小论文.md
-├── 数据集采集.md
-├── src/                 # 后续放 PSDK/推理/策略代码
-├── scripts/             # 数据转换、标注、训练、评估脚本
-├── configs/             # 实验配置、模型配置、采集配置
-├── docs/                # 论文图表、开题材料、附录
-├── data/                # 本地数据占位，不提交原始大文件
-└── outputs/             # 可交付输出
-```
-
+视频流
+  -> 轻量检测器
+  -> Kalman-based tracking
+  -> tracking uncertainty / target scale estimation
+  -> safe zoom policy
+  -> optical/foveated zoom regulation
