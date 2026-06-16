@@ -34,7 +34,23 @@ def _split(values: list[str]) -> list[str]:
 
 
 def _load_config(path: str | Path) -> dict[str, Any]:
-    import yaml
+    try:
+        import yaml
+    except ModuleNotFoundError:
+        warnings.warn(
+            "PyYAML is unavailable; using default UAV123 paths and log-only plotting when GT is missing.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return {
+            "dataset": {
+                "image_root": "/root/autodl-tmp/UFZTrack/datasets/UAV123_10fps/data_seq/UAV123_10fps",
+                "bbox_anno_root": "/root/autodl-tmp/UFZTrack/datasets/UAV123_10fps/anno/UAV123_10fps",
+                "frame_glob": "*.jpg",
+                "frame_stride": 1,
+                "max_frames": None,
+            }
+        }
 
     with Path(path).open("r", encoding="utf-8") as f:
         return yaml.safe_load(f)
@@ -112,6 +128,7 @@ def main() -> int:
     import matplotlib.pyplot as plt
 
     for sequence_name in sequences:
+        gt_boxes = None
         try:
             sequence = load_uav123_sequence(
                 sequence_name,
@@ -121,22 +138,27 @@ def main() -> int:
                 frame_stride=cfg["dataset"].get("frame_stride", 1),
                 max_frames=cfg["dataset"].get("max_frames"),
             )
+            gt_boxes = sequence.gt_boxes
         except (FileNotFoundError, ValueError) as exc:
-            warnings.warn(f"Skipping {sequence_name}: {exc}", RuntimeWarning, stacklevel=2)
-            continue
+            warnings.warn(
+                f"{sequence_name}: GT unavailable ({exc}); plotting log-only curves.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
 
         curves: dict[str, list[float]] = {}
         log_series: dict[str, dict[str, list[float]]] = {}
         for method in methods:
             predictions = _read_result_boxes(output_root / "results" / method / f"{sequence_name}.txt")
-            if predictions:
-                curves[method] = _cle_curve(predictions, sequence.gt_boxes)
+            if predictions and gt_boxes is not None:
+                curves[method] = _cle_curve(predictions, gt_boxes)
             rows = _read_log_rows(output_root / "logs" / method / f"{sequence_name}.csv")
             if rows:
                 log_series[method] = {
                     "zoom_level": _series_from_log(rows, "zoom_level"),
                     "area": _series_from_log(rows, "area"),
                     "uncertainty": _series_from_log(rows, "uncertainty"),
+                    "conf": _series_from_log(rows, "conf"),
                 }
 
         if not curves and not log_series:
@@ -146,9 +168,25 @@ def main() -> int:
         fig, axes = plt.subplots(3, 1, figsize=(10, 7.5), sharex=True)
         fig.suptitle(f"{sequence_name}: UFZ case behavior", fontsize=13)
 
-        for method, cle_values in curves.items():
-            axes[0].plot(range(1, len(cle_values) + 1), cle_values, label=method, linewidth=1.2)
-        axes[0].set_ylabel("CLE (px, capped 500)")
+        if curves:
+            for method, cle_values in curves.items():
+                axes[0].plot(range(1, len(cle_values) + 1), cle_values, label=method, linewidth=1.2)
+            axes[0].set_ylabel("CLE (px, capped 500)")
+        else:
+            for method, series in log_series.items():
+                conf_values = series.get("conf", [])
+                uncertainty_values = series.get("uncertainty", [])
+                if conf_values:
+                    axes[0].plot(range(1, len(conf_values) + 1), conf_values, label=f"{method} conf", linewidth=1.2)
+                if uncertainty_values:
+                    axes[0].plot(
+                        range(1, len(uncertainty_values) + 1),
+                        uncertainty_values,
+                        label=f"{method} uncertainty",
+                        linewidth=1.0,
+                        linestyle="--",
+                    )
+            axes[0].set_ylabel("Conf / uncertainty")
         axes[0].grid(True, alpha=0.25)
         axes[0].legend(loc="upper right")
 

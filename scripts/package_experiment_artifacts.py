@@ -31,7 +31,7 @@ DEFAULT_SUMMARY = "docs/experiments/runs/20260616_full_valid_ufz_v2_2_yolov8n_su
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Package GitHub-safe UFZ Experiment 1 paper artifacts.")
     parser.add_argument("--output-root", default="/root/autodl-tmp/UFZTrack/outputs")
-    parser.add_argument("--artifact-root", default=DEFAULT_ARTIFACT_ROOT)
+    parser.add_argument("--artifact-root", "--output-dir", default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--summary", default=DEFAULT_SUMMARY)
     parser.add_argument("--cases", nargs="+", default=None, help="Selected case names or comma lists.")
     parser.add_argument("--methods", nargs="+", default=DEFAULT_METHODS, help="Selected log methods or comma lists.")
@@ -102,6 +102,13 @@ def main() -> int:
     methods = _split(args.methods, DEFAULT_METHODS)
 
     artifact_root.mkdir(parents=True, exist_ok=True)
+    for directory in [
+        artifact_root / "tables",
+        artifact_root / "figures" / "cases",
+        artifact_root / "logs_selected",
+        artifact_root / "summaries",
+    ]:
+        directory.mkdir(parents=True, exist_ok=True)
     _write_readme(artifact_root / "README.md")
 
     table_names = [
