@@ -27,7 +27,13 @@ def main() -> int:
     from ufztrack.detector_yolo import Detection
     from ufztrack.kalman_tracker import KalmanBoxTracker
     from ufztrack.measurement_selector import ByteTrackLikeSingleTargetSelector, MeasurementSelector
-    from ufztrack.metrics import bbox_iou, center_location_error, distance_precision, evaluate_sequence
+    from ufztrack.metrics import (
+        bbox_iou,
+        center_location_error,
+        distance_precision,
+        evaluate_sequence,
+        evaluate_sequence_robust,
+    )
     from ufztrack.uncertainty import estimate_blur_risk
     from ufztrack.zoom_policy import ZoomPolicy
     from ufztrack.zoom_simulator import ZoomSimulator, original_to_zoomed_bbox, zoomed_to_original_bbox
@@ -87,6 +93,12 @@ def main() -> int:
         )
     if invalid_metrics.mean_iou != 0.0 or invalid_metrics.invalid_pred_count != 2:
         raise AssertionError("Invalid bbox metrics are not stable")
+    robust_metrics = evaluate_sequence_robust(
+        [BBox(0.0, 0.0, 10.0, 10.0), BBox(float("nan"), 0.0, 10.0, 10.0)],
+        [BBox(3.0, 4.0, 10.0, 10.0), BBox(0.0, 0.0, 10.0, 10.0)],
+    )
+    if robust_metrics.valid_cle_frames != 1 or robust_metrics.failure_rate_50 != 0.0:
+        raise AssertionError("Robust invalid-frame metrics are not stable")
 
     policy = ZoomPolicy("scale_only")
     decision = policy.decide(

@@ -10,8 +10,6 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 
 def _add_src_to_path() -> None:
     repo_root = Path(__file__).resolve().parents[1]
@@ -28,6 +26,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def _load_config(path: str | Path) -> dict[str, Any]:
+    import yaml
+
     with Path(path).open("r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
@@ -181,12 +181,12 @@ def _build_win_count_rows(rows: list[dict[str, Any]], robust_rows: list[dict[str
 
 
 def main() -> int:
+    args = parse_args()
     _add_src_to_path()
     from ufztrack.dataset_uav123 import load_uav123_sequence
     from ufztrack.metrics import evaluate_frames, evaluate_sequence, evaluate_sequence_robust
     from ufztrack.visualization import plot_precision_curves, plot_success_curves
 
-    args = parse_args()
     cfg = _load_config(args.config)
     output_root = Path(cfg["outputs"]["root"])
     results_root = output_root / "results"
