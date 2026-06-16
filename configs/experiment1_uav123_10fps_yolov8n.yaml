@@ -1,0 +1,51 @@
+experiment:
+  name: exp1_uav123_10fps_yolov8n_debug
+  output_dir: outputs/experiment1_yolov8n_debug
+
+dataset:
+  # Point this to one UAV123 sequence directory, or to a root containing sequences.
+  root: data/UAV123
+  sequence: null
+  frame_stride: 3
+  max_frames: null
+  image_globs:
+    - img/*.jpg
+    - img/*.png
+    - images/*.jpg
+    - images/*.png
+    - "*.jpg"
+    - "*.png"
+  gt_files:
+    - groundtruth_rect.txt
+    - groundtruth.txt
+    - gt.txt
+
+detector:
+  weights: yolov8n.pt
+  conf: 0.25
+  iou: 0.7
+  imgsz: 640
+  classes: null
+  device: null
+
+tracker:
+  dt: 1.0
+  process_noise: 25.0
+  measurement_noise: 36.0
+  initial_velocity_variance: 400.0
+  min_box_size: 2.0
+  max_missed: 30
+
+zoom:
+  levels: [1, 2, 4, 8]
+  initial_level: 1
+  uncertainty_thresholds:
+    - {max_trace: 80.0, level: 8}
+    - {max_trace: 180.0, level: 4}
+    - {max_trace: 400.0, level: 2}
+    - {max_trace: .inf, level: 1}
+  crop_padding: 1.0
+
+measurement_selection:
+  max_center_distance_ratio: 0.75
+  score_weight: 0.15

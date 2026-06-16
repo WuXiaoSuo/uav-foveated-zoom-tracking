@@ -1,0 +1,128 @@
+experiment:
+  name: experiment1_uav123_10fps_offline_zoom
+
+dataset:
+  root: /root/autodl-tmp/UFZTrack/datasets/UAV123_10fps
+  image_root: /root/autodl-tmp/UFZTrack/datasets/UAV123_10fps/data_seq/UAV123_10fps
+  bbox_anno_root: /root/autodl-tmp/UFZTrack/datasets/UAV123_10fps/anno/UAV123_10fps
+  attribute_root: /root/autodl-tmp/UFZTrack/datasets/UAV123_10fps/anno/UAV123_10fps/att
+  frame_glob: "*.jpg"
+  frame_stride: 1
+  max_frames: null
+  sequences: null
+
+outputs:
+  root: /root/autodl-tmp/UFZTrack/outputs
+
+detector:
+  model: yolov8n.pt
+  conf: 0.10
+  iou: 0.70
+  imgsz: 640
+  classes: null
+  device: null
+
+tracker:
+  dt: 1.0
+  process_noise: 25.0
+  measurement_noise: 36.0
+  initial_velocity_variance: 400.0
+  min_box_size: 2.0
+
+zoom:
+  levels: [1, 2, 4, 8]
+  initial_level: 1
+  crop_mode: predicted_center
+  context_margin_factor: 0.20
+  uncertainty_margin_gain: 0.35
+  min_context_pixels: 24
+
+measurement_selection:
+  conf_min: 0.10
+  iou_gate: 0.05
+  dist_gate_factor: 2.0
+  iou_weight: 0.6
+  distance_weight: 0.3
+  confidence_weight: 0.1
+
+association:
+  high_conf_thresh: 0.35
+  low_conf_thresh: 0.08
+  iou_gate: 0.05
+  center_dist_factor: 2.5
+  area_ratio_min: 0.2
+  area_ratio_max: 5.0
+
+uncertainty:
+  confidence_weight: 0.40
+  innovation_weight: 0.25
+  jitter_weight: 0.20
+  edge_weight: 0.15
+  association_weight: 0.15
+  blur_weight: 0.10
+  edge_margin_ratio: 0.08
+  lost_conf_decay: 0.85
+  blur_variance_low: 40.0
+  blur_variance_high: 200.0
+
+recovery:
+  lost_to_caution: 1
+  lost_to_recovery: 2
+  stable_frames_to_tracking: 3
+  force_wide_lost: 4
+
+policy:
+  fixed_tele_level: 4
+  area_level_thresholds:
+    level8_max: 0.0025
+    level4_max: 0.0100
+    level2_max: 0.0400
+  confidence_thresholds:
+    level1_max: 0.25
+    level2_max: 0.55
+    level4_max: 0.80
+  ufz:
+    cooldown_frames: 5
+    hysteresis_ratio: 0.15
+    high_uncertainty: 0.65
+    medium_uncertainty: 0.45
+    high_edge_risk: 0.70
+    lost_wide_after: 2
+  ufz_v2:
+    threshold_in: 0.20
+    threshold_out: 0.05
+    area_min: 0.010
+    area_high: 0.090
+    high_uncertainty: 0.60
+    low_uncertainty: 0.35
+    high_blur_risk: 0.70
+    high_association_risk: 0.65
+    min_stable_zoom_in_frames: 2
+    disable_recovery: false
+    disable_edge_suppression: false
+    disable_lowconf_assoc: false
+  ufz_v2_1:
+    stable_frames_to_zoom_in: 2
+    stable_conf_thresh: 0.25
+    ambiguity_safe_thresh: 0.45
+    innovation_safe_thresh: 0.50
+    edge_safe_thresh: 0.65
+    blur_safe_thresh: 0.65
+    hold_min_frames_after_zoom: 8
+    cooldown_frames: 4
+    recovery_cooldown_frames: 3
+    hard_edge_thresh: 0.85
+    hard_blur_thresh: 0.85
+    hard_assoc_thresh: 0.80
+    area_low: 0.0025
+    area_target: 0.006
+    area_high: 0.035
+  ufz_v2_2:
+    hard_edge_thresh: 0.88
+    hard_assoc_thresh: 0.90
+    hard_blur_thresh: 0.90
+    hard_overzoom_area: 0.040
+    lost_recovery_thresh: 2
+    force_wide_lost: 4
+    cooldown_frames: 4
+    hold_min_frames_after_zoom: 4
