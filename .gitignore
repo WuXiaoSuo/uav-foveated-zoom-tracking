@@ -10,7 +10,6 @@ __pycache__/
 venv/
 env/
 .env
-
 # Large data and model artifacts
 data/
 datasets/
@@ -30,7 +29,6 @@ runs/
 *.mkv
 *.zip
 *.tar.gz
-
 # GitHub-safe experiment artifact packages only.
 artifacts/*
 !artifacts/experiments/
@@ -41,11 +39,14 @@ artifacts/experiments/**/*
 !artifacts/experiments/**/*.png
 !artifacts/experiments/**/*.json
 !artifacts/experiments/**/MANIFEST_SHA256.txt
-
 # System files
 .DS_Store
-
 # Research planning notes kept outside the GitHub repo
 毕业论文.md
 小论文.md
 数据集采集.md
+# Keep folder placeholders, ignore real data/output contents
+data/*
+!data/.gitkeep
+outputs/*
+!outputs/.gitkeep
