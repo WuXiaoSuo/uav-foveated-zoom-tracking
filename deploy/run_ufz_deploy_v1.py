@@ -205,7 +205,8 @@ class OpenCVTrackerWrapper:
         self.tracker = tracker
 
     def init(self, frame: Any, bbox: tuple[float, float, float, float]) -> None:
-        ok = self.tracker.init(frame, tuple(float(v) for v in bbox))
+        roi = normalize_roi_bbox(bbox, "OpenCV tracker init bbox")
+        ok = self.tracker.init(frame, roi)
         if ok is False:
             raise RuntimeError("OpenCV tracker initialization failed")
 
@@ -689,7 +690,7 @@ def open_frame_source(source: str, cfg: dict[str, Any]) -> FrameSource:
     return CaptureSource(source, fallback_fps=fps, max_frames=max_frames)
 
 
-def resolve_initial_bbox(frame: Any, cfg: dict[str, Any]) -> tuple[float, float, float, float] | None:
+def resolve_initial_bbox(frame: Any, cfg: dict[str, Any]) -> tuple[int, int, int, int] | None:
     import cv2
 
     raw = cfg["input"].get("init_bbox")
@@ -699,22 +700,33 @@ def resolve_initial_bbox(frame: Any, cfg: dict[str, Any]) -> tuple[float, float,
         raise ValueError("input.init_bbox is empty and interactive_init is false")
     roi = cv2.selectROI("UFZ-Deploy-v1 init bbox", frame, showCrosshair=True, fromCenter=False)
     cv2.destroyWindow("UFZ-Deploy-v1 init bbox")
-    return tuple(float(v) for v in roi)
+    return normalize_roi_bbox(roi, "selected ROI bbox")
 
 
-def parse_bbox(value: Any) -> tuple[float, float, float, float]:
+def parse_bbox(value: Any) -> tuple[int, int, int, int]:
     if isinstance(value, str):
         parts = [p.strip() for p in value.replace(";", ",").split(",") if p.strip()]
     elif isinstance(value, Iterable):
         parts = list(value)
     else:
         raise ValueError(f"cannot parse bbox from {value!r}")
+    return normalize_roi_bbox(parts, "bbox")
+
+
+def normalize_roi_bbox(value: Iterable[Any], label: str = "bbox") -> tuple[int, int, int, int]:
+    parts = list(value)
     if len(parts) != 4:
-        raise ValueError(f"bbox must have four values x,y,w,h: {value!r}")
-    bbox = tuple(float(v) for v in parts)
-    if not all(math.isfinite(v) for v in bbox) or bbox[2] <= 0 or bbox[3] <= 0:
-        raise ValueError(f"invalid bbox: {value!r}")
-    return bbox
+        raise ValueError(f"{label} must have four values x,y,w,h: {value!r}")
+    try:
+        floats = [float(v) for v in parts]
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{label} contains non-numeric values: {value!r}") from exc
+    if not all(math.isfinite(v) for v in floats):
+        raise ValueError(f"{label} contains non-finite values: {value!r}")
+    x, y, w, h = tuple(int(round(float(v))) for v in floats)
+    if w <= 0 or h <= 0:
+        raise ValueError(f"{label} must have positive width and height after ROI selection: {(x, y, w, h)!r}")
+    return x, y, w, h
 
 
 def require_bbox(bbox: tuple[float, float, float, float] | None, image_w: int, image_h: int, label: str) -> tuple[float, float, float, float]:
