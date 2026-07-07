@@ -1,0 +1,57 @@
+# UFZ-Deploy-v1 default configuration for DJI Manifold 3 + H30.
+# Single H30 Z-stream closed loop: manual bbox init -> tracker -> gimbal centering -> conservative optical zoom.
+# 20x/40x are intentionally disabled for the first deployment phase.
+
+input:
+  # Video file, image directory, or RTSP URL. Prefer offline video/image-dir smoke tests first.
+  source: ""
+  type: auto          # auto | video | image_dir | rtsp
+  fps: 30.0           # Used for image directories or streams without FPS metadata.
+  max_frames: null
+
+  # Manual initialization. Set [x, y, w, h] for headless runs.
+  init_bbox: null
+  interactive_init: true
+
+tracker:
+  # auto tries OpenCV CSRT/KCF/MIL, then falls back to template matching.
+  # Use template for a dependency-light smoke test if opencv-contrib trackers are unavailable.
+  type: auto          # auto | csrt | kcf | mil | template
+  template_min_score: 0.45
+  template_search_scale: 2.5
+  template_update_alpha: 0.05
+
+gimbal:
+  enabled: true
+  command_sink: dry_run   # dry_run | psdk_placeholder
+  deadband: 0.015
+
+  # Rate command = normalized center error * gain, then clamped.
+  # Verify yaw/pitch signs on the real H30 before enabling a real PSDK sink.
+  yaw_kp: 35.0
+  pitch_kp: -28.0
+  max_yaw_rate_deg_s: 18.0
+  max_pitch_rate_deg_s: 14.0
+
+zoom:
+  levels: [2, 5, 10]
+  disabled_levels: [20, 40]
+  initial_level: 2
+
+  # Conservative optical zoom state machine.
+  zoom_in_area_ratio: 0.012
+  zoom_out_area_ratio: 0.100
+  max_area_ratio: 0.160
+  zoom_in_min_edge_margin: 0.160
+  safe_edge_margin: 0.100
+  danger_edge_margin: 0.050
+  stable_frames_for_zoom_in: 12
+  lost_to_wide_frames: 3
+  cooldown_frames: 18
+
+output:
+  root: outputs/deploy_v1
+  draw_video: true
+  video_name: ufz_deploy_v1_vis.mp4
+  csv_name: ufz_deploy_v1_log.csv
+  metadata_name: ufz_deploy_v1_metadata.json
